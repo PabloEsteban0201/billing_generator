@@ -19,7 +19,6 @@ import com.tbttest.demo.dto.BasicResponse;
 import com.tbttest.demo.dto.InvoiceDto;
 import com.tbttest.demo.entity.Client;
 import com.tbttest.demo.entity.Invoice;
-import com.tbttest.demo.entity.InvoiceProductKey;
 import com.tbttest.demo.entity.InvoicesProducts;
 import com.tbttest.demo.entity.Product;
 import com.tbttest.demo.exceptions.BasicException;

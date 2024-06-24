@@ -27,7 +27,7 @@ public class Product {
     @Column(name = "name", nullable = false, length = 4000)
     private String name;
 
-    @Column(name = "description", length = 4000, nullable = false, columnDefinition = "VARCHAR2(4000)")
+    @Column(name = "description", nullable = false, length = 4000)
     private String description;
 
     @Column(name = "price", nullable = false)

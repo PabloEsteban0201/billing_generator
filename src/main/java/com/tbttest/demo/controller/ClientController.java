@@ -22,6 +22,7 @@ import com.tbttest.demo.business.ClientBusiness;
 import com.tbttest.demo.dto.BasicResponse;
 import com.tbttest.demo.entity.Client;
 import com.tbttest.demo.exceptions.ClientDbException;
+import com.tbttest.demo.exceptions.ClientNotFoundException;
 
 @RestController
 @RequestMapping("/client")
@@ -38,14 +39,22 @@ public class ClientController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<Client> getClientById(@PathVariable(value = "id") String id) {
-		Optional<Client> oClient = clientBusiness.findById(id);
+	public ResponseEntity<?> getClientById(@PathVariable(value = "id") String id) {
+		Optional<Client> oClient;
+		
+		try {
+			oClient = clientBusiness.findById(id);
+			if (!oClient.isPresent()) {
+				return ResponseEntity.badRequest().build();
+			}
 
-		if (!oClient.isPresent()) {
-			return ResponseEntity.notFound().build();
+			return ResponseEntity.ok(oClient.get());
+		} catch (ClientDbException | ClientNotFoundException e) {
+			
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e);
 		}
 
-		return ResponseEntity.ok(oClient.get());
+		
 
 	}
 
@@ -62,6 +71,17 @@ public class ClientController {
 	@PutMapping
 	public ResponseEntity<Client> updateClient(@RequestBody Client client) {
 		try {
+			
+			if(!Optional.ofNullable(client).filter(c->c.getDocumentId()!=null && !c.getDocumentId().isEmpty() &&
+					c.getName()!=null && !c.getName().isEmpty() &&
+					c.getPhone()!=null && !c.getPhone().isEmpty()).isPresent()) {
+				return ResponseEntity.badRequest().build();
+			}
+			
+			if(!clientBusiness.findById(client.getDocumentId()).isPresent()) {
+				return ResponseEntity.notFound().build();
+			}
+			
 			return ResponseEntity.ok(clientBusiness.registerClient(client));
 		} catch (Exception e) {
 			return ResponseEntity.internalServerError().build();
@@ -69,13 +89,15 @@ public class ClientController {
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<BasicResponse> deleteClientById(@PathVariable(value = "id") String id) {
+	public ResponseEntity<?> deleteClientById(@PathVariable(value = "id") String id) {
 
 		try {
+			clientBusiness.findById(id).isPresent();
+			
 			return ResponseEntity.ok(clientBusiness.deleteClient(id));
-		} catch (ClientDbException e) {
+		} catch (ClientDbException | ClientNotFoundException e) {
 			return ResponseEntity.internalServerError().body(new BasicResponse(e.getMessage()));
-		}
+		}  
 	}
 	
 	

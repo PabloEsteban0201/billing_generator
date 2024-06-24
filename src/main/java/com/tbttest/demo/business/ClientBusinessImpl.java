@@ -9,7 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.tbttest.demo.dao.ClientDao;
 import com.tbttest.demo.dto.BasicResponse;
 import com.tbttest.demo.entity.Client;
+import com.tbttest.demo.exceptions.BasicException;
 import com.tbttest.demo.exceptions.ClientDbException;
+import com.tbttest.demo.exceptions.ClientNotFoundException;
 
 @Service
 public class ClientBusinessImpl implements ClientBusiness {
@@ -26,9 +28,25 @@ public class ClientBusinessImpl implements ClientBusiness {
 	
 	@Override
 	@Transactional(readOnly=true)
-	public Optional<Client> findById(String documentId) {
+	public Optional<Client> findById(String documentId) throws ClientDbException, ClientNotFoundException{
 		
-		return clientDao.findById(documentId);
+		try {
+			
+			Optional<Client> oClient = clientDao.findById(documentId);
+			
+			if(!oClient.isPresent()) {
+				throw new ClientNotFoundException("Cliente no encontrado");
+			}
+			
+			return clientDao.findById(documentId);
+			
+		} catch (BasicException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ClientDbException("Error no controlado: "+e.getMessage());
+		}
+		
+		
 	}
 
 	@Override

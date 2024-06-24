@@ -25,6 +25,7 @@ import com.tbttest.demo.entity.Invoice;
 import com.tbttest.demo.exceptions.ClientNotFoundException;
 import com.tbttest.demo.exceptions.InvoiceDbException;
 import com.tbttest.demo.exceptions.InvoiceNotFoundException;
+import com.tbttest.demo.utils.Utils;
 
 @RestController
 @RequestMapping("/invoice")
@@ -66,10 +67,19 @@ public class InvoiceController {
 	@PutMapping
 	public ResponseEntity<?> updateInvoice(@RequestBody InvoiceDto invoiceDto) {
 		try {
+
+			if (!Optional.ofNullable(invoiceDto)
+					.filter(i -> !Utils.isEmpty(i.getClientId()) && i.getDateInvoice() != null
+							&& i.getInvoiceId() != null && i.getTotalAmount() != null && i.getProductIds() != null)
+					.isPresent()) {
+				return ResponseEntity.badRequest().build();
+			}
+			
+
 			return ResponseEntity.ok(invoiceBusiness.updateInvoice(invoiceDto));
 		} catch (InvoiceNotFoundException | ClientNotFoundException e) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e);
-		}catch (Exception e) {
+		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e);
 		}
 	}
@@ -78,6 +88,11 @@ public class InvoiceController {
 	public ResponseEntity<BasicResponse> deleteInvoiceById(@PathVariable(value = "id") Long id) {
 
 		try {
+			
+			if(invoiceBusiness.findById(id).isEmpty()) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new BasicResponse("Factura no econtrada"));
+			}
+			
 			return ResponseEntity.ok(invoiceBusiness.deleteInvoice(id));
 		} catch (InvoiceDbException e) {
 			return ResponseEntity.internalServerError().body(new BasicResponse(e.getMessage()));
