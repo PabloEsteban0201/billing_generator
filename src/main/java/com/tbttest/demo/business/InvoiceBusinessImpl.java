@@ -1,6 +1,7 @@
 package com.tbttest.demo.business;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -18,6 +19,7 @@ import com.tbttest.demo.dto.BasicResponse;
 import com.tbttest.demo.dto.InvoiceDto;
 import com.tbttest.demo.entity.Client;
 import com.tbttest.demo.entity.Invoice;
+import com.tbttest.demo.entity.InvoiceProductKey;
 import com.tbttest.demo.entity.InvoicesProducts;
 import com.tbttest.demo.entity.Product;
 import com.tbttest.demo.exceptions.BasicException;
@@ -121,9 +123,11 @@ public class InvoiceBusinessImpl implements InvoiceBusiness {
 			invoiceUpdate.setTotalAmount(calculateTotalAmount(products));
 
 			Invoice invoiceDb = invoiceDao.save(invoiceUpdate);
-
+			
+			
 			if(products.isEmpty()) {
-				products.forEach(product -> invoiceProductsDao.delete(new InvoicesProducts(invoiceUpdate, product)));
+				List<InvoicesProducts> invoicesProductsToDelete = invoiceProductsDao.findByInvoice_InvoiceId(invoiceDto.getInvoiceId());
+				invoicesProductsToDelete.forEach(invoiceProduct -> invoiceProductsDao.delete(invoiceProduct));
 			}else {
 				products.forEach(product -> invoiceProductsDao.save(new InvoicesProducts(invoiceUpdate, product)));
 			}
