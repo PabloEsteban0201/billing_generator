@@ -2,8 +2,6 @@ package com.tbttest.demo.controller;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,10 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tbttest.demo.business.InvoiceBusiness;
 import com.tbttest.demo.dto.BasicResponse;
 import com.tbttest.demo.dto.InvoiceDto;
+import com.tbttest.demo.dto.InvoiceProductsDto;
 import com.tbttest.demo.entity.Invoice;
 import com.tbttest.demo.exceptions.ClientNotFoundException;
 import com.tbttest.demo.exceptions.InvoiceDbException;
 import com.tbttest.demo.exceptions.InvoiceNotFoundException;
+import com.tbttest.demo.utils.Messages;
 import com.tbttest.demo.utils.Utils;
 
 @RestController
@@ -46,9 +46,9 @@ public class InvoiceController {
 	}
 	
 	@GetMapping
-	public List<Invoice> readAll() {
+	public List<InvoiceProductsDto> readAll() {
 
-		return StreamSupport.stream(invoiceBusiness.findAll().spliterator(), false).collect(Collectors.toList());
+		return invoiceBusiness.findAll();
 	}
 
 	@GetMapping("/{id}")
@@ -90,7 +90,7 @@ public class InvoiceController {
 		try {
 			
 			if(invoiceBusiness.findById(id).isEmpty()) {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new BasicResponse("Factura no econtrada"));
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new BasicResponse(Messages.INVOICE_NOT_FOUND));
 			}
 			
 			return ResponseEntity.ok(invoiceBusiness.deleteInvoice(id));

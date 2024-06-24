@@ -12,6 +12,7 @@ import com.tbttest.demo.dto.BasicResponse;
 import com.tbttest.demo.entity.Product;
 import com.tbttest.demo.exceptions.ProductDbException;
 import com.tbttest.demo.exceptions.ProductDbNotFoundException;
+import com.tbttest.demo.utils.Messages;
 
 @Service
 public class ProductBusinessImpl implements ProductBusiness {
@@ -46,7 +47,7 @@ public class ProductBusinessImpl implements ProductBusiness {
 			return productDao.save(product);
 
 		} catch (Exception e) {
-			throw new ProductDbException("Error no controlado: " + e.getMessage());
+			throw new ProductDbException(Messages.UNHANDLED_ERROR + e.getMessage());
 		}
 
 	}
@@ -60,7 +61,7 @@ public class ProductBusinessImpl implements ProductBusiness {
 			return productDao.save(product);
 
 		} catch (Exception e) {
-			throw new ProductDbException("Error no controlado: " + e.getMessage());
+			throw new ProductDbException(Messages.UNHANDLED_ERROR + e.getMessage());
 		}
 
 	}
@@ -72,7 +73,7 @@ public class ProductBusinessImpl implements ProductBusiness {
 			productDao.deleteById(productId);
 			return new BasicResponse("Producto eliminado exitosamente");
 		} catch (Exception e) {
-			throw new ProductDbException("Error no controlado: " + e.getMessage());
+			throw new ProductDbException(Messages.UNHANDLED_ERROR + e.getMessage());
 		}
 	}
 

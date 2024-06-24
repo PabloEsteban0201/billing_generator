@@ -31,22 +31,21 @@ public class InvoicesProducts {
 
 	public InvoicesProducts() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
-	public Invoice getTypeConcept() {
+	public Invoice getInvoice() {
 		return invoice;
 	}
 
-	public void setTypeConcept(Invoice invoice) {
+	public void setInvoice(Invoice invoice) {
 		this.invoice = invoice;
 	}
 
-	public Product getPayment() {
+	public Product getProduct() {
 		return product;
 	}
 
-	public void setPayment(Product product) {
+	public void setProduct(Product product) {
 		this.product = product;
 	}
 	

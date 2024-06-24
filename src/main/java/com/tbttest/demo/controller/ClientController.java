@@ -2,7 +2,6 @@ package com.tbttest.demo.controller;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +22,8 @@ import com.tbttest.demo.dto.BasicResponse;
 import com.tbttest.demo.entity.Client;
 import com.tbttest.demo.exceptions.ClientDbException;
 import com.tbttest.demo.exceptions.ClientNotFoundException;
+import com.tbttest.demo.utils.Messages;
+import com.tbttest.demo.utils.Utils;
 
 @RestController
 @RequestMapping("/client")
@@ -35,7 +36,7 @@ public class ClientController {
 	@GetMapping
 	public List<Client> readAll() {
 
-		return StreamSupport.stream(clientBusiness.findAll().spliterator(), false).collect(Collectors.toList());
+		return StreamSupport.stream(clientBusiness.findAll().spliterator(), false).toList();
 	}
 
 	@GetMapping("/{id}")
@@ -49,7 +50,9 @@ public class ClientController {
 			}
 
 			return ResponseEntity.ok(oClient.get());
-		} catch (ClientDbException | ClientNotFoundException e) {
+		} catch (ClientNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e);
+		} catch (ClientDbException e) {
 			
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e);
 		}
@@ -62,6 +65,11 @@ public class ClientController {
 	public ResponseEntity<?> registerClient(@RequestBody Client client) {
 
 		try {
+			if(Optional.ofNullable(client).filter(c->!Utils.isEmpty(c.getDocumentId())&&
+					!Utils.isEmpty(c.getName()) && !Utils.isEmpty(c.getPhone())).isEmpty()) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BasicResponse(Messages.BODY_ERROR));
+			}
+			
 			return ResponseEntity.ok(clientBusiness.registerClient(client));
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BasicResponse(e.getMessage()));
@@ -72,17 +80,17 @@ public class ClientController {
 	public ResponseEntity<Client> updateClient(@RequestBody Client client) {
 		try {
 			
-			if(!Optional.ofNullable(client).filter(c->c.getDocumentId()!=null && !c.getDocumentId().isEmpty() &&
-					c.getName()!=null && !c.getName().isEmpty() &&
-					c.getPhone()!=null && !c.getPhone().isEmpty()).isPresent()) {
+			if(!Optional.ofNullable(client).filter(c->!Utils.isEmpty(c.getDocumentId()) &&
+					!Utils.isEmpty(c.getName()) &&
+					!Utils.isEmpty(c.getPhone())).isPresent()) {
 				return ResponseEntity.badRequest().build();
 			}
 			
-			if(!clientBusiness.findById(client.getDocumentId()).isPresent()) {
-				return ResponseEntity.notFound().build();
-			}
+			clientBusiness.findById(client.getDocumentId());
 			
 			return ResponseEntity.ok(clientBusiness.registerClient(client));
+		} catch (ClientNotFoundException e) {
+			return ResponseEntity.notFound().build();
 		} catch (Exception e) {
 			return ResponseEntity.internalServerError().build();
 		}
@@ -92,12 +100,13 @@ public class ClientController {
 	public ResponseEntity<?> deleteClientById(@PathVariable(value = "id") String id) {
 
 		try {
-			clientBusiness.findById(id).isPresent();
-			
+			clientBusiness.findById(id);
 			return ResponseEntity.ok(clientBusiness.deleteClient(id));
-		} catch (ClientDbException | ClientNotFoundException e) {
+		} catch (ClientNotFoundException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new BasicResponse("Cliente no encontrado"));
+		} catch (ClientDbException e) {
 			return ResponseEntity.internalServerError().body(new BasicResponse(e.getMessage()));
-		}  
+		}
 	}
 	
 	

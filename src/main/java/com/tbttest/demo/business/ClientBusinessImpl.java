@@ -12,6 +12,7 @@ import com.tbttest.demo.entity.Client;
 import com.tbttest.demo.exceptions.BasicException;
 import com.tbttest.demo.exceptions.ClientDbException;
 import com.tbttest.demo.exceptions.ClientNotFoundException;
+import com.tbttest.demo.utils.Messages;
 
 @Service
 public class ClientBusinessImpl implements ClientBusiness {
@@ -35,7 +36,7 @@ public class ClientBusinessImpl implements ClientBusiness {
 			Optional<Client> oClient = clientDao.findById(documentId);
 			
 			if(!oClient.isPresent()) {
-				throw new ClientNotFoundException("Cliente no encontrado");
+				throw new ClientNotFoundException(Messages.CLIENT_NOT_FOUND);
 			}
 			
 			return clientDao.findById(documentId);

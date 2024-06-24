@@ -1,6 +1,7 @@
 package com.tbttest.demo.business;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import com.tbttest.demo.dao.InvoicesProductsDao;
 import com.tbttest.demo.dao.ProductDao;
 import com.tbttest.demo.dto.BasicResponse;
 import com.tbttest.demo.dto.InvoiceDto;
+import com.tbttest.demo.dto.InvoiceProductsDto;
 import com.tbttest.demo.entity.Client;
 import com.tbttest.demo.entity.Invoice;
 import com.tbttest.demo.entity.InvoicesProducts;
@@ -28,70 +30,86 @@ import com.tbttest.demo.exceptions.InvoiceNotFoundException;
 
 @Service
 public class InvoiceBusinessImpl implements InvoiceBusiness {
-	
+
 	@Autowired
 	private InvoiceDao invoiceDao;
-	
+
 	@Autowired
 	private ProductDao productDao;
-	
+
 	@Autowired
 	private ClientDao clientDao;
-	
+
 	@Autowired
 	private InvoicesProductsDao invoiceProductsDao;
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public Invoice registerInvoice(InvoiceDto invoiceDto) throws InvoiceDbException {
-		
+
 		try {
-			
+
 			Set<Product> products = invoiceDto.getProductIds().stream().map(id -> productDao.findById(id))
 					.filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
-			
+
 			Optional<Client> client = clientDao.findById(invoiceDto.getClientId());
-			
-			if(!client.isPresent()) {
+
+			if (!client.isPresent()) {
 				throw new ClientNotFoundException("Cliente no encontrado documento:" + invoiceDto.getClientId());
 			}
-			
-			Invoice invoice = new Invoice(null, calculateTotalAmount(products), invoiceDto.getDateInvoice(), client.get());
-			
+
+			Invoice invoice = new Invoice(null, calculateTotalAmount(products), invoiceDto.getDateInvoice(),
+					client.get());
+
 			Invoice invoiceDb = invoiceDao.save(invoice);
-			
-			if(!products.isEmpty()) {
-				products.forEach(product->invoiceProductsDao.save(new InvoicesProducts(invoiceDb, product)));
+
+			if (!products.isEmpty()) {
+				products.forEach(product -> invoiceProductsDao.save(new InvoicesProducts(invoiceDb, product)));
 			}
-			
 
 			return invoiceDb;
-			
+
 		} catch (Exception e) {
 			throw new InvoiceDbException("Error al guadar factura", e);
 		}
-		
+
 	}
-	
+
 	private BigDecimal calculateTotalAmount(Set<Product> products) {
-		
-		if(products.isEmpty()) {
+
+		if (products.isEmpty()) {
 			return BigDecimal.ZERO;
 		}
-		
-		return products.stream().filter(Objects::nonNull).map(Product::getPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
-		
+
+		return products.stream().filter(Objects::nonNull).map(Product::getPrice).reduce(BigDecimal.ZERO,
+				BigDecimal::add);
+
 	}
 
 	@Override
-	public Iterable<Invoice> findAll() {
-	
-		return invoiceDao.findAll();
+	public List<InvoiceProductsDto> findAll() {
+		
+		List<Invoice> invoices = invoiceDao.findAll();
+		
+		List<InvoiceProductsDto> invoicesWithProducts = new ArrayList<>();
+		
+		for (Invoice invoice : invoices) {
+			
+			List<Product> productsTemo = invoiceProductsDao.findProductsByInvoiceId(invoice.getInvoiceId());
+			
+			InvoiceProductsDto invo = new InvoiceProductsDto(invoice.getInvoiceId(), invoice.getTotalAmount(), invoice.getDateInvoice(),
+					productsTemo, invoice.getClient().getDocumentId());
+			
+			invoicesWithProducts.add(invo);
+			
+		}
+		
+		return invoicesWithProducts;
 	}
 
 	@Override
 	public Optional<Invoice> findById(Long invoiceId) {
-		
+
 		return invoiceDao.findById(invoiceId);
 	}
 
@@ -103,39 +121,39 @@ public class InvoiceBusinessImpl implements InvoiceBusiness {
 			Set<Product> products = invoiceDto.getProductIds().stream().map(id -> productDao.findById(id))
 					.filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
 
-			Optional <Client> client = clientDao.findById(invoiceDto.getClientId());
-			
-			if(!client.isPresent()) {
+			Optional<Client> client = clientDao.findById(invoiceDto.getClientId());
+
+			if (!client.isPresent()) {
 				throw new ClientNotFoundException("Cliente no encontrado documento:" + invoiceDto.getClientId());
 			}
-			
-			Optional <Invoice> invoice = invoiceDao.findById(invoiceDto.getInvoiceId());
-			
-			if(!invoice.isPresent()) {
+
+			Optional<Invoice> invoice = invoiceDao.findById(invoiceDto.getInvoiceId());
+
+			if (!invoice.isPresent()) {
 				throw new InvoiceNotFoundException("Factura no encontrada id:" + invoiceDto.getInvoiceId());
 			}
-			
+
 			Invoice invoiceUpdate = invoice.get();
-			
+
 			invoiceUpdate.setClient(client.get());
 			invoiceUpdate.setDateInvoice(invoiceDto.getDateInvoice());
 			invoiceUpdate.setTotalAmount(calculateTotalAmount(products));
 
 			Invoice invoiceDb = invoiceDao.save(invoiceUpdate);
-			
-			
-			if(products.isEmpty()) {
-				List<InvoicesProducts> invoicesProductsToDelete = invoiceProductsDao.findByInvoice_InvoiceId(invoiceDto.getInvoiceId());
+
+			if (products.isEmpty()) {
+				List<InvoicesProducts> invoicesProductsToDelete = invoiceProductsDao
+						.findByInvoice_InvoiceId(invoiceDto.getInvoiceId());
 				invoicesProductsToDelete.forEach(invoiceProduct -> invoiceProductsDao.delete(invoiceProduct));
-			}else {
+			} else {
 				products.forEach(product -> invoiceProductsDao.save(new InvoicesProducts(invoiceUpdate, product)));
 			}
-			
+
 			return invoiceDb;
 
 		} catch (BasicException e) {
 			throw e;
-		}catch (Exception e) {
+		} catch (Exception e) {
 			throw new InvoiceDbException("Error al guadar factura", e);
 		}
 	}

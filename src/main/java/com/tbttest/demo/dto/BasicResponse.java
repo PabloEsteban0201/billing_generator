@@ -6,7 +6,6 @@ public class BasicResponse {
 
 	public BasicResponse() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	public BasicResponse(String message) {

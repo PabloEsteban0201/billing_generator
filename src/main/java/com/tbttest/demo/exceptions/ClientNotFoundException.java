@@ -18,7 +18,5 @@ public class ClientNotFoundException extends BasicException {
 	public ClientNotFoundException(String detailMessage, Throwable cause) {
 		super(detailMessage, cause, "404");
 	}
-	
-	
 
 }

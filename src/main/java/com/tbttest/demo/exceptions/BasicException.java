@@ -17,7 +17,7 @@ public class BasicException extends Exception {
 	public BasicException(String detailMessage, String message, Throwable cause, String code) {
 		super(message, cause);
 		this.code = code;
-		this.detailMessage=detailMessage;
+		this.detailMessage = detailMessage;
 
 	}
 
@@ -26,6 +26,11 @@ public class BasicException extends Exception {
 		this.code = code;
 		this.detailMessage = "";
 
+	}
+
+	@Override
+	public synchronized Throwable fillInStackTrace() {
+		return this;
 	}
 
 	public String getCode() {
